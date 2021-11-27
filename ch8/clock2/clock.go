@@ -7,25 +7,47 @@
 package main
 
 import (
+	"flag"
 	"io"
 	"log"
 	"net"
 	"time"
 )
 
-func handleConn(c net.Conn) {
+var port = flag.String("port", "8000", "port")
+
+func handleConn(c net.Conn, p string) {
 	defer c.Close()
 	for {
-		_, err := io.WriteString(c, time.Now().Format("15:04:05\n"))
-		if err != nil {
-			return // e.g., client disconnected
+		switch p {
+		case "8010":
+			tz, _ := time.LoadLocation("US/Eastern")
+			_, err := io.WriteString(c, time.Now().In(tz).Format("15:04:05\n"))
+			if err != nil {
+				return // e.g., client disconnected
+			}
+			time.Sleep(1 * time.Second)
+		case "8020":
+			tz, _ := time.LoadLocation("Asia/Tokyo")
+			_, err := io.WriteString(c, time.Now().In(tz).Format("15:04:05\n"))
+			if err != nil {
+				return // e.g., client disconnected
+			}
+			time.Sleep(1 * time.Second)
+		case "8030":
+			tz, _ := time.LoadLocation("Europe/London")
+			_, err := io.WriteString(c, time.Now().In(tz).Format("15:04:05\n"))
+			if err != nil {
+				return // e.g., client disconnected
+			}
+			time.Sleep(1 * time.Second)
 		}
-		time.Sleep(1 * time.Second)
 	}
 }
 
 func main() {
-	listener, err := net.Listen("tcp", "localhost:8000")
+	flag.Parse()
+	listener, err := net.Listen("tcp", "localhost:"+*port)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -36,7 +58,7 @@ func main() {
 			log.Print(err) // e.g., connection aborted
 			continue
 		}
-		go handleConn(conn) // handle connections concurrently
+		go handleConn(conn, *port) // handle connections concurrently
 	}
 	//!-
 }
